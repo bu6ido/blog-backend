@@ -1,0 +1,22 @@
+
+./artisan make:migration create_posts_table
+./artisan migrate:status
+./artisan migrate:rollback
+./artisan migrate:fresh
+
+./artisan make:factory PostFactory
+/database/seeders/DatabaseSeeder.php
+./artisan db:seed
+
+./artisan make:model Post
+
+./artisan make:policy PostPolicy --model=Post
+
+./artisan make:controller PostController --model=Post --api --requests
+//StorePostRequest, UpdatePostRequest
+//Route::apiResource
+
+./artisan make:resource UserResource
+./artisan make:resource PostResource
+
+
