@@ -14,12 +14,12 @@ class CommentController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request, Post $post)
     {
         $this->authorize('viewAny', Comment::class);
         
         $search = $request->input('query');
-        $postId = $request->input('post_id');
+        $postId = $post?->id; //$request->input('post_id');
         $rowsPerPage = $request->input('rowsPerPage', 5);
         $sortBy = $request->input('sortBy');
         $sortDir = $request->input('sortDir', 'asc');
@@ -57,15 +57,17 @@ class CommentController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreCommentRequest $request)
+    public function store(StoreCommentRequest $request, Post $post)
     {
         $this->authorize('create', Comment::class);
                 
         $comment = new Comment();
         $comment->content = $request->input('content');
-        $comment->post_id = $request->input('post_id');
+        //$comment->post_id = $request->input('post_id');
+        $comment->post()->associate($post);
         $comment->user_id = $request->input('user_id');
-        $comment->save();
+        //$comment->save();
+        $post->comments()->save($comment);
 
         return response()->json(['ok' => true, 'id' => $comment->id]);
     }
