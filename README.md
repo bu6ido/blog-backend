@@ -8,7 +8,7 @@
 </p>
 
 ## This is the Backend module
-This is the Backend module. You can check the Frontend module of this application: <a href="https://github.com/bu6ido/blog-frontend" alt="Frontend module">https://github.com/bu6ido/blog-frontend</a>
+This is the Backend module. You can check the Frontend module of this application: [https://github.com/bu6ido/blog-frontend](https://github.com/bu6ido/blog-frontend)
 
 ## How to Install
 1. Checkout the project
