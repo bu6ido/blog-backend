@@ -7,6 +7,35 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## This is the Backend module
+This is the Backend module. You can check the Frontend module of this application: <a href="https://github.com/bu6ido/blog-frontend" alt="Frontend module">https://github.com/bu6ido/blog-frontend</a>
+
+## How to Install
+1. Checkout the project
+
+2. Configure database in <b>.env</b> file
+
+3. (Optional) Configure <b>FRONTEND_URL</b> in <b>.env</b> to point the address and the port of the Frontend module
+
+3. Run: 
+```bash
+# Create the Laravel database...
+php artisan migrate
+```
+4. If you want some initial data in the database, run:
+```bash
+# Create some initial data in database...
+php artisan db:seed
+```
+
+After seeding you can login to the frontend module with email: <b>test1@example.com</b> or <b>test2@example.com</b>, ... <b>test5@example.com</b>. The password for all these emails is: <b>123456</b>
+
+5. To start the server, run:
+```bash
+# Serve the application...
+php artisan serve
+```
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

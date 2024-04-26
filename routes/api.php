@@ -22,20 +22,5 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 
 Route::middleware(['auth:sanctum'])->apiResource('posts', PostController::class);
 
-/*Route::middleware(['auth:sanctum'])->controller(PostController::class)->group(function () {
-    Route::get('/posts', 'index'); 
-    Route::get('/posts/{post}', 'show');   
-    Route::post('/posts', 'store');
-    Route::put('/posts/{post}', 'update');
-    Route::delete('/posts/{post}', 'destroy');
-});*/
-
 Route::middleware(['auth:sanctum'])->apiResource('posts.comments', CommentController::class)->shallow();
 
-/*Route::middleware(['auth:sanctum'])->controller(CommentController::class)->group(function () {
-    Route::get('/comments', 'index'); 
-    Route::get('/comments/{comment}', 'show');   
-    Route::post('/comments', 'store');
-    Route::put('/comments/{comment}', 'update');
-    Route::delete('/comments/{comment}', 'destroy');
-});*/
