@@ -16,11 +16,21 @@ class Post extends Model
         'content',
     ]; 
     
+    /**
+     * Relationship to User model
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }           
 
+    /**
+     * Relationship (one to many) to Comment model
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class);

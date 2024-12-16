@@ -14,11 +14,21 @@ class Comment extends Model
         'content',
     ];     
 
+    /**
+     * Relationship to Post model
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
     public function post(): BelongsTo
     {
         return $this->belongsTo(Post::class);
     }  
         
+    /**
+     * Relationship to User model
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

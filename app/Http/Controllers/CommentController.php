@@ -13,6 +13,10 @@ class CommentController extends Controller
 {
     /**
      * Display a listing of the resource.
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @param \App\Models\Post $post
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
     public function index(Request $request, Post $post)
     {
@@ -56,6 +60,10 @@ class CommentController extends Controller
 
     /**
      * Store a newly created resource in storage.
+     * 
+     * @param \App\Http\Requests\StoreCommentRequest $request
+     * @param \App\Models\Post $post
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(StoreCommentRequest $request, Post $post)
     {
@@ -74,6 +82,9 @@ class CommentController extends Controller
 
     /**
      * Display the specified resource.
+     * 
+     * @param \App\Models\Comment $comment
+     * @return \App\Http\Resources\CommentResource
      */
     public function show(Comment $comment)
     {
@@ -86,6 +97,10 @@ class CommentController extends Controller
 
     /**
      * Update the specified resource in storage.
+     * 
+     * @param \App\Http\Requests\UpdateCommentRequest $request
+     * @param \App\Models\Comment $comment
+     * @return \Illuminate\Http\JsonResponse
      */
     public function update(UpdateCommentRequest $request, Comment $comment)
     {
@@ -101,6 +116,9 @@ class CommentController extends Controller
 
     /**
      * Remove the specified resource from storage.
+     * 
+     * @param \App\Models\Comment $comment
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy(Comment $comment)
     {
