@@ -4,8 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Post;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Str;
 use Illuminate\Testing\Fluent\AssertableJson;
 use Tests\TestCase;
@@ -19,11 +17,11 @@ class PostTest extends TestCase
         parent::setUp();
 
         $usersCount = User::count();
-        $this->user = ($usersCount >= 1)? 
-            User::firstOrFail() : 
+        $this->user = ($usersCount >= 1) ?
+            User::firstOrFail() :
             User::factory()->create();
         $this->assertDatabaseHas('users', [
-          'email' => $this->user?->email,
+            'email' => $this->user?->email,
         ]);
         $this->assertDatabaseCount('users', 1);
     }
@@ -36,6 +34,7 @@ class PostTest extends TestCase
     private function getPost(int $postId): Post
     {
         $post = Post::findOrFail($postId);
+
         return $post;
     }
 
@@ -43,9 +42,9 @@ class PostTest extends TestCase
     {
         $response = $this->actingAs($this->user)
             ->postJson(
-                route('posts.store'), 
+                route('posts.store'),
                 [
-                    'title' => $title, 
+                    'title' => $title,
                     'content' => Str::random(512),
                     'user_id' => $this->user?->id,
                 ]
@@ -53,12 +52,11 @@ class PostTest extends TestCase
 
         $response
             ->assertStatus(200)
-            ->assertJson(fn (AssertableJson $json) => 
-                $json->where('ok', true)
-                     ->whereType('id', 'integer')
-                     ->etc()
+            ->assertJson(fn (AssertableJson $json) => $json->where('ok', true)
+                ->whereType('id', 'integer')
+                ->etc()
             );
-            
+
         return $response->getData()->id;
     }
 
@@ -84,17 +82,15 @@ class PostTest extends TestCase
 
         $response
             ->assertStatus(200)
-            ->assertJson(fn (AssertableJson $json) => 
-                $json->has('data')
-                    ->first(fn (AssertableJson $json2) => 
-                        $json2->where('id', $newId)
-                            ->whereType('id', 'integer')
-                            ->whereType('title', 'string')
-                            ->whereType('content', 'string')
-                            ->whereType('user_id', 'integer')
-                            ->etc()
-                    )
+            ->assertJson(fn (AssertableJson $json) => $json->has('data')
+                ->first(fn (AssertableJson $json2) => $json2->where('id', $newId)
+                    ->whereType('id', 'integer')
+                    ->whereType('title', 'string')
+                    ->whereType('content', 'string')
+                    ->whereType('user_id', 'integer')
                     ->etc()
+                )
+                ->etc()
             );
     }
 
@@ -104,10 +100,10 @@ class PostTest extends TestCase
 
         $response = $this->actingAs($this->user)
             ->putJson(
-                route('posts.update', ['post' => $newId]), 
+                route('posts.update', ['post' => $newId]),
                 [
-                    'id' => $newId, 
-                    'title' => 'Test Post 3 - Updated', 
+                    'id' => $newId,
+                    'title' => 'Test Post 3 - Updated',
                     'content' => Str::random(512),
                     'user_id' => $this->user?->id,
                 ]
@@ -115,9 +111,8 @@ class PostTest extends TestCase
 
         $response
             ->assertStatus(200)
-            ->assertJson(fn (AssertableJson $json) => 
-                $json->where('ok', true)
-                     ->etc()
+            ->assertJson(fn (AssertableJson $json) => $json->where('ok', true)
+                ->etc()
             );
     }
 
@@ -127,14 +122,13 @@ class PostTest extends TestCase
 
         $response = $this->actingAs($this->user)
             ->deleteJson(
-                route('posts.destroy', ['post' => $newId]), 
+                route('posts.destroy', ['post' => $newId]),
             );
 
         $response
             ->assertStatus(200)
-            ->assertJson(fn (AssertableJson $json) => 
-                $json->where('ok', true)
-                     ->etc()
+            ->assertJson(fn (AssertableJson $json) => $json->where('ok', true)
+                ->etc()
             );
     }
 
@@ -144,21 +138,18 @@ class PostTest extends TestCase
             ->getJson(
                 route('posts.index')
             );
-        
+
         $response
             ->assertStatus(200)
-            ->assertJson(fn (AssertableJson $json) => 
-                $json->has('data')
-                    ->first(fn (AssertableJson $json2) => 
-                        $json2->each(fn (AssertableJson $json3) => 
-                            $json3->whereType('id', 'integer')
-                                ->whereType('title', 'string')
-                                //->whereType('content', 'string')
-                                ->whereType('user_id', 'integer')
-                                ->etc()
-                        )
-                    )
+            ->assertJson(fn (AssertableJson $json) => $json->has('data')
+                ->first(fn (AssertableJson $json2) => $json2->each(fn (AssertableJson $json3) => $json3->whereType('id', 'integer')
+                    ->whereType('title', 'string')
+                            //->whereType('content', 'string')
+                    ->whereType('user_id', 'integer')
                     ->etc()
+                )
+                )
+                ->etc()
             );
     }
 }

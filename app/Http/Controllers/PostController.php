@@ -2,22 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Http\Requests\StorePostRequest;
 use App\Http\Requests\UpdatePostRequest;
 use App\Http\Resources\PostResource;
-use App\Models\User;
 use App\Models\Post;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class PostController extends Controller
 {
     /**
      * Display a listing of the resource.
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Post::class);
 
@@ -25,9 +23,9 @@ class PostController extends Controller
         $rowsPerPage = $request->input('rowsPerPage', 5);
         $sortBy = $request->input('sortBy');
         $sortDir = $request->input('sortDir', 'asc');
-        
-        $query = Post::with('user')->withAggregate('user', 'name')->withCount('comments'); 
-        if (!empty($search)) {
+
+        $query = Post::with('user')->withAggregate('user', 'name')->withCount('comments');
+        if (! empty($search)) {
             $query = $query->where(function ($q) use ($search) {
                 $q->where('id', 'like', '%'.$search.'%');
                 $q->orWhere('title', 'like', '%'.$search.'%');
@@ -36,7 +34,7 @@ class PostController extends Controller
                 });
             });
         }
-        if (!empty($sortBy) && !empty($sortDir)) {
+        if (! empty($sortBy) && ! empty($sortDir)) {
             $query = $query->orderBy($sortBy, $sortDir);
         }
         $query = $query
@@ -50,11 +48,8 @@ class PostController extends Controller
 
     /**
      * Store a newly created resource in storage.
-     * 
-     * @param \App\Http\Requests\StorePostRequest $request
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function store(StorePostRequest $request)
+    public function store(StorePostRequest $request): JsonResponse
     {
         $this->authorize('create', Post::class);
 
@@ -69,27 +64,19 @@ class PostController extends Controller
 
     /**
      * Display the specified resource.
-     * 
-     * @param \App\Models\Post $post
-     * @return \App\Http\Resources\PostResource
      */
-    public function show(Post $post)
+    public function show(Post $post): PostResource
     {
-        /** @todo $post = Post::with('comments')->findOrFail($post->id); */        
-        
+        /** @todo $post = Post::with('comments')->findOrFail($post->id); */
         $this->authorize('view', $post);
-        
+
         return new PostResource($post);
     }
 
     /**
      * Update the specified resource in storage.
-     * 
-     * @param \App\Http\Requests\UpdatePostRequest $request
-     * @param \App\Models\Post $post
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function update(UpdatePostRequest $request, Post $post)
+    public function update(UpdatePostRequest $request, Post $post): JsonResponse
     {
         $this->authorize('update', $post);
 
@@ -97,22 +84,19 @@ class PostController extends Controller
         $post->content = $request->input('content');
         $post->user_id = $request->input('user_id');
         $post->save();
-        
+
         return response()->json(['ok' => true]);
     }
 
     /**
      * Remove the specified resource from storage.
-     * 
-     * @param \App\Models\Post $post
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function destroy(Post $post)
+    public function destroy(Post $post): JsonResponse
     {
         $this->authorize('delete', $post);
 
         $post->comments()->delete();
-        
+
         $post->delete();
 
         return response()->json(['ok' => true]);

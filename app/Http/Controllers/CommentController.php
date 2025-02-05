@@ -2,36 +2,34 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\UpdateCommentRequest;
 use App\Http\Resources\CommentResource;
 use App\Models\Comment;
 use App\Models\Post;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class CommentController extends Controller
 {
     /**
      * Display a listing of the resource.
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @param \App\Models\Post $post
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
-    public function index(Request $request, Post $post)
+    public function index(Request $request, Post $post): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Comment::class);
-        
+
         $search = $request->input('query');
         $postId = $post?->id; //$request->input('post_id');
         $rowsPerPage = $request->input('rowsPerPage', 5);
         $sortBy = $request->input('sortBy');
         $sortDir = $request->input('sortDir', 'asc');
-        
+
         $query = Comment::with(['user', 'post'])
             ->withAggregate('user', 'name')
-            ->withAggregate('post', 'title'); 
-        if (!empty($search)) {
+            ->withAggregate('post', 'title');
+        if (! empty($search)) {
             $query = $query->where(function ($q) use ($search) {
                 $q->where('id', 'like', '%'.$search.'%');
                 $q->orWhere('content', 'like', '%'.$search.'%');
@@ -43,10 +41,10 @@ class CommentController extends Controller
                 });
             });
         }
-        if (!empty($postId)) {
+        if (! empty($postId)) {
             $query = $query->where('post_id', $postId);
         }
-        if (!empty($sortBy) && !empty($sortDir)) {
+        if (! empty($sortBy) && ! empty($sortDir)) {
             $query = $query->orderBy($sortBy, $sortDir);
         }
         $query = $query
@@ -55,20 +53,16 @@ class CommentController extends Controller
 
         return CommentResource::collection(
             $query
-        );        
+        );
     }
 
     /**
      * Store a newly created resource in storage.
-     * 
-     * @param \App\Http\Requests\StoreCommentRequest $request
-     * @param \App\Models\Post $post
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function store(StoreCommentRequest $request, Post $post)
+    public function store(StoreCommentRequest $request, Post $post): JsonResponse
     {
         $this->authorize('create', Comment::class);
-                
+
         $comment = new Comment();
         $comment->content = $request->input('content');
         //$comment->post_id = $request->input('post_id');
@@ -82,51 +76,40 @@ class CommentController extends Controller
 
     /**
      * Display the specified resource.
-     * 
-     * @param \App\Models\Comment $comment
-     * @return \App\Http\Resources\CommentResource
      */
-    public function show(Comment $comment)
+    public function show(Comment $comment): CommentResource
     {
         $this->authorize('view', $comment);
 
         $comment = Comment::with(['post', 'user'])->findOrFail($comment->id);
 
-        return new CommentResource($comment);                
+        return new CommentResource($comment);
     }
 
     /**
      * Update the specified resource in storage.
-     * 
-     * @param \App\Http\Requests\UpdateCommentRequest $request
-     * @param \App\Models\Comment $comment
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function update(UpdateCommentRequest $request, Comment $comment)
+    public function update(UpdateCommentRequest $request, Comment $comment): JsonResponse
     {
-        $this->authorize('update', $comment);        
-        
+        $this->authorize('update', $comment);
+
         $comment->content = $request->input('content');
         $comment->post_id = $request->input('post_id');
         $comment->user_id = $request->input('user_id');
         $comment->save();
-        
+
         return response()->json(['ok' => true]);
     }
 
     /**
      * Remove the specified resource from storage.
-     * 
-     * @param \App\Models\Comment $comment
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function destroy(Comment $comment)
+    public function destroy(Comment $comment): JsonResponse
     {
-        $this->authorize('delete', $comment);        
-        
+        $this->authorize('delete', $comment);
+
         $comment->delete();
-        
-        return response()->json(['ok' => true]);        
+
+        return response()->json(['ok' => true]);
     }
 }
-

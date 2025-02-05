@@ -18,9 +18,9 @@ class CommentFactory extends Factory
     public function definition(): array
     {
         return [
-            'content' => Str::random(512), 
-            'post_id' => 0, 
-            'user_id' => 0, 
+            'content' => Str::random(512),
+            'post_id' => 0,
+            'user_id' => 0,
         ];
     }
 }

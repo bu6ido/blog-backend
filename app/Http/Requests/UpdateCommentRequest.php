@@ -8,8 +8,6 @@ class UpdateCommentRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
-     * 
-     * @return bool
      */
     public function authorize(): bool
     {
@@ -27,8 +25,8 @@ class UpdateCommentRequest extends FormRequest
             //
             'id' => 'required|integer|exists:comments,id',
             'content' => 'required|string',
-            'post_id' => 'required|integer|exists:posts,id',            
-            'user_id' => 'required|integer|exists:users,id',            
+            'post_id' => 'required|integer|exists:posts,id',
+            'user_id' => 'required|integer|exists:users,id',
         ];
     }
 }

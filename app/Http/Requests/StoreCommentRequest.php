@@ -8,8 +8,6 @@ class StoreCommentRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
-     * 
-     * @return bool
      */
     public function authorize(): bool
     {
@@ -26,8 +24,8 @@ class StoreCommentRequest extends FormRequest
         return [
             //
             'content' => 'required|string',
-//            'post_id' => 'required|integer|exists:posts,id',            
-            'user_id' => 'required|integer|exists:users,id',            
+            //            'post_id' => 'required|integer|exists:posts,id',
+            'user_id' => 'required|integer|exists:users,id',
         ];
     }
 }
