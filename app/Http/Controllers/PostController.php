@@ -53,11 +53,7 @@ class PostController extends Controller
     {
         $this->authorize('create', Post::class);
 
-        $post = new Post();
-        $post->title = $request->input('title');
-        $post->content = $request->input('content');
-        $post->user_id = $request->input('user_id');
-        $post->save();
+        $post = Post::create($request->validated());
 
         return response()->json(['ok' => true, 'id' => $post->id]);
     }
@@ -79,13 +75,10 @@ class PostController extends Controller
     public function update(UpdatePostRequest $request, Post $post): JsonResponse
     {
         $this->authorize('update', $post);
+        
+        $result = $post->update($request->validated());
 
-        $post->title = $request->input('title');
-        $post->content = $request->input('content');
-        $post->user_id = $request->input('user_id');
-        $post->save();
-
-        return response()->json(['ok' => true]);
+        return response()->json(['ok' => $result]);
     }
 
     /**
@@ -97,8 +90,8 @@ class PostController extends Controller
 
         $post->comments()->delete();
 
-        $post->delete();
+        $result = $post->delete();
 
-        return response()->json(['ok' => true]);
+        return response()->json(['ok' => $result]);
     }
 }

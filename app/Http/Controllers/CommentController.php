@@ -64,11 +64,8 @@ class CommentController extends Controller
         $this->authorize('create', Comment::class);
 
         $comment = new Comment();
-        $comment->content = $request->input('content');
-        //$comment->post_id = $request->input('post_id');
+        $comment->fill($request->validated());
         $comment->post()->associate($post);
-        $comment->user_id = $request->input('user_id');
-        //$comment->save();
         $post->comments()->save($comment);
 
         return response()->json(['ok' => true, 'id' => $comment->id]);
@@ -92,13 +89,10 @@ class CommentController extends Controller
     public function update(UpdateCommentRequest $request, Comment $comment): JsonResponse
     {
         $this->authorize('update', $comment);
+        
+        $result = $comment->update($request->validated());
 
-        $comment->content = $request->input('content');
-        $comment->post_id = $request->input('post_id');
-        $comment->user_id = $request->input('user_id');
-        $comment->save();
-
-        return response()->json(['ok' => true]);
+        return response()->json(['ok' => $result]);
     }
 
     /**
@@ -108,8 +102,8 @@ class CommentController extends Controller
     {
         $this->authorize('delete', $comment);
 
-        $comment->delete();
+        $result = $comment->delete();
 
-        return response()->json(['ok' => true]);
+        return response()->json(['ok' => $result]);
     }
 }
