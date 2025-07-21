@@ -10,6 +10,8 @@ use App\Models\Post;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 class CommentController extends Controller
 {
@@ -20,36 +22,40 @@ class CommentController extends Controller
     {
         $this->authorize('viewAny', Comment::class);
 
-        $search = $request->input('query');
-        $postId = $post?->id; //$request->input('post_id');
-        $rowsPerPage = $request->input('rowsPerPage', 5);
-        $sortBy = $request->input('sortBy');
-        $sortDir = $request->input('sortDir', 'asc');
+        $query = DB::transaction(function () use ($request, $post): LengthAwarePaginator {
+            $search = $request->input('query');
+            $postId = $post?->id; //$request->input('post_id');
+            $rowsPerPage = $request->input('rowsPerPage', 5);
+            $sortBy = $request->input('sortBy');
+            $sortDir = $request->input('sortDir', 'asc');
 
-        $query = Comment::with(['user', 'post'])
-            ->withAggregate('user', 'name')
-            ->withAggregate('post', 'title');
-        if (! empty($search)) {
-            $query = $query->where(function ($q) use ($search) {
-                $q->where('id', 'like', '%'.$search.'%');
-                $q->orWhere('content', 'like', '%'.$search.'%');
-                $q->orWhereHas('post', function ($q2) use ($search) {
-                    $q2->where('title', 'like', '%'.$search.'%');
+            $query = Comment::with(['user', 'post'])
+                ->withAggregate('user', 'name')
+                ->withAggregate('post', 'title');
+            if (! empty($search)) {
+                $query = $query->where(function ($q) use ($search) {
+                    $q->where('id', 'like', '%'.$search.'%');
+                    $q->orWhere('content', 'like', '%'.$search.'%');
+                    $q->orWhereHas('post', function ($q2) use ($search) {
+                        $q2->where('title', 'like', '%'.$search.'%');
+                    });
+                    $q->orWhereHas('user', function ($q2) use ($search) {
+                        $q2->where('name', 'like', '%'.$search.'%');
+                    });
                 });
-                $q->orWhereHas('user', function ($q2) use ($search) {
-                    $q2->where('name', 'like', '%'.$search.'%');
-                });
-            });
-        }
-        if (! empty($postId)) {
-            $query = $query->where('post_id', $postId);
-        }
-        if (! empty($sortBy) && ! empty($sortDir)) {
-            $query = $query->orderBy($sortBy, $sortDir);
-        }
-        $query = $query
-            ->paginate($rowsPerPage)
-            ->withQueryString();
+            }
+            if (! empty($postId)) {
+                $query = $query->where('post_id', $postId);
+            }
+            if (! empty($sortBy) && ! empty($sortDir)) {
+                $query = $query->orderBy($sortBy, $sortDir);
+            }
+            $query = $query
+                ->paginate($rowsPerPage)
+                ->withQueryString();
+
+            return $query;
+        });
 
         return CommentResource::collection(
             $query
@@ -63,10 +69,14 @@ class CommentController extends Controller
     {
         $this->authorize('create', Comment::class);
 
-        $comment = new Comment();
-        $comment->fill($request->validated());
-        $comment->post()->associate($post);
-        $post->comments()->save($comment);
+        $comment = DB::transaction(function () use ($request, $post): Comment {
+            $comment = new Comment();
+            $comment->fill($request->validated());
+            $comment->post()->associate($post);
+            $post->comments()->save($comment);
+
+            return $comment;
+        });
 
         return response()->json(['ok' => true, 'id' => $comment->id]);
     }
@@ -78,7 +88,11 @@ class CommentController extends Controller
     {
         $this->authorize('view', $comment);
 
-        $comment = Comment::with(['post', 'user'])->findOrFail($comment->id);
+        $comemnt = DB::transaction(function () use ($comment): Comment {
+            $comment = Comment::with(['post', 'user'])->findOrFail($comment->id);
+
+            return $comment;
+        });
 
         return new CommentResource($comment);
     }
@@ -89,8 +103,12 @@ class CommentController extends Controller
     public function update(UpdateCommentRequest $request, Comment $comment): JsonResponse
     {
         $this->authorize('update', $comment);
-        
-        $result = $comment->update($request->validated());
+
+        $result = DB::transaction(function () use ($request, $comment): bool {
+            $result = $comment->update($request->validated());
+
+            return $result;
+        });
 
         return response()->json(['ok' => $result]);
     }
@@ -102,7 +120,11 @@ class CommentController extends Controller
     {
         $this->authorize('delete', $comment);
 
-        $result = $comment->delete();
+        $result = DB::transaction(function () use ($comment): bool {
+            $result = $comment->delete();
+
+            return $result;
+        });
 
         return response()->json(['ok' => $result]);
     }

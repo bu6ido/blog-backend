@@ -9,6 +9,8 @@ use App\Models\Post;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 class PostController extends Controller
 {
@@ -19,27 +21,31 @@ class PostController extends Controller
     {
         $this->authorize('viewAny', Post::class);
 
-        $search = $request->input('query');
-        $rowsPerPage = $request->input('rowsPerPage', 5);
-        $sortBy = $request->input('sortBy');
-        $sortDir = $request->input('sortDir', 'asc');
+        $query = DB::transaction(function () use ($request): LengthAwarePaginator {
+            $search = $request->input('query');
+            $rowsPerPage = $request->input('rowsPerPage', 5);
+            $sortBy = $request->input('sortBy');
+            $sortDir = $request->input('sortDir', 'asc');
 
-        $query = Post::with('user')->withAggregate('user', 'name')->withCount('comments');
-        if (! empty($search)) {
-            $query = $query->where(function ($q) use ($search) {
-                $q->where('id', 'like', '%'.$search.'%');
-                $q->orWhere('title', 'like', '%'.$search.'%');
-                $q->orWhereHas('user', function ($q2) use ($search) {
-                    $q2->where('name', 'like', '%'.$search.'%');
+            $query = Post::with('user')->withAggregate('user', 'name')->withCount('comments');
+            if (! empty($search)) {
+                $query = $query->where(function ($q) use ($search) {
+                    $q->where('id', 'like', '%'.$search.'%');
+                    $q->orWhere('title', 'like', '%'.$search.'%');
+                    $q->orWhereHas('user', function ($q2) use ($search) {
+                        $q2->where('name', 'like', '%'.$search.'%');
+                    });
                 });
-            });
-        }
-        if (! empty($sortBy) && ! empty($sortDir)) {
-            $query = $query->orderBy($sortBy, $sortDir);
-        }
-        $query = $query
-            ->paginate($rowsPerPage)
-            ->withQueryString();
+            }
+            if (! empty($sortBy) && ! empty($sortDir)) {
+                $query = $query->orderBy($sortBy, $sortDir);
+            }
+            $query = $query
+                ->paginate($rowsPerPage)
+                ->withQueryString();
+
+            return $query;
+        });
 
         return PostResource::collection(
             $query
@@ -53,7 +59,11 @@ class PostController extends Controller
     {
         $this->authorize('create', Post::class);
 
-        $post = Post::create($request->validated());
+        $post = DB::transaction(function () use ($request): Post {
+            $post = Post::create($request->validated());
+
+            return $post;
+        });
 
         return response()->json(['ok' => true, 'id' => $post->id]);
     }
@@ -75,8 +85,12 @@ class PostController extends Controller
     public function update(UpdatePostRequest $request, Post $post): JsonResponse
     {
         $this->authorize('update', $post);
-        
-        $result = $post->update($request->validated());
+
+        $result = DB::transaction(function () use ($request, $post): bool {
+            $result = $post->update($request->validated());
+
+            return $result;
+        });
 
         return response()->json(['ok' => $result]);
     }
@@ -88,9 +102,12 @@ class PostController extends Controller
     {
         $this->authorize('delete', $post);
 
-        $post->comments()->delete();
+        $result = DB::transaction(function () use ($post): bool {
+            $post->comments()->delete();
+            $result = $post->delete();
 
-        $result = $post->delete();
+            return $result;
+        });
 
         return response()->json(['ok' => $result]);
     }
