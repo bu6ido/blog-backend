@@ -10,7 +10,6 @@ use App\Models\Post;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class CommentController extends Controller
@@ -22,40 +21,36 @@ class CommentController extends Controller
     {
         $this->authorize('viewAny', Comment::class);
 
-        $query = DB::transaction(function () use ($request, $post): LengthAwarePaginator {
-            $search = $request->input('query');
-            $postId = $post?->id; //$request->input('post_id');
-            $rowsPerPage = $request->input('rowsPerPage', 5);
-            $sortBy = $request->input('sortBy');
-            $sortDir = $request->input('sortDir', 'asc');
+        $search = $request->input('query');
+        $postId = $post?->id; //$request->input('post_id');
+        $rowsPerPage = $request->input('rowsPerPage', 5);
+        $sortBy = $request->input('sortBy');
+        $sortDir = $request->input('sortDir', 'asc');
 
-            $query = Comment::with(['user', 'post'])
-                ->withAggregate('user', 'name')
-                ->withAggregate('post', 'title');
-            if (! empty($search)) {
-                $query = $query->where(function ($q) use ($search) {
-                    $q->where('id', 'like', '%'.$search.'%');
-                    $q->orWhere('content', 'like', '%'.$search.'%');
-                    $q->orWhereHas('post', function ($q2) use ($search) {
-                        $q2->where('title', 'like', '%'.$search.'%');
-                    });
-                    $q->orWhereHas('user', function ($q2) use ($search) {
-                        $q2->where('name', 'like', '%'.$search.'%');
-                    });
+        $query = Comment::with(['user', 'post'])
+            ->withAggregate('user', 'name')
+            ->withAggregate('post', 'title');
+        if (! empty($search)) {
+            $query = $query->where(function ($q) use ($search) {
+                $q->where('id', 'like', '%'.$search.'%');
+                $q->orWhere('content', 'like', '%'.$search.'%');
+                $q->orWhereHas('post', function ($q2) use ($search) {
+                    $q2->where('title', 'like', '%'.$search.'%');
                 });
-            }
-            if (! empty($postId)) {
-                $query = $query->where('post_id', $postId);
-            }
-            if (! empty($sortBy) && ! empty($sortDir)) {
-                $query = $query->orderBy($sortBy, $sortDir);
-            }
-            $query = $query
-                ->paginate($rowsPerPage)
-                ->withQueryString();
-
-            return $query;
-        });
+                $q->orWhereHas('user', function ($q2) use ($search) {
+                    $q2->where('name', 'like', '%'.$search.'%');
+                });
+            });
+        }
+        if (! empty($postId)) {
+            $query = $query->where('post_id', $postId);
+        }
+        if (! empty($sortBy) && ! empty($sortDir)) {
+            $query = $query->orderBy($sortBy, $sortDir);
+        }
+        $query = $query
+            ->paginate($rowsPerPage)
+            ->withQueryString();
 
         return CommentResource::collection(
             $query
@@ -73,7 +68,7 @@ class CommentController extends Controller
             $comment = new Comment();
             $comment->fill($request->validated());
             $comment->post()->associate($post);
-            $post->comments()->save($comment);
+            $post->comments()->lockForUpdate()->save($comment);
 
             return $comment;
         });
@@ -88,11 +83,7 @@ class CommentController extends Controller
     {
         $this->authorize('view', $comment);
 
-        $comemnt = DB::transaction(function () use ($comment): Comment {
-            $comment = Comment::with(['post', 'user'])->findOrFail($comment->id);
-
-            return $comment;
-        });
+        $comment = Comment::with(['post', 'user'])->findOrFail($comment->id);
 
         return new CommentResource($comment);
     }
