@@ -68,7 +68,7 @@ class CommentController extends Controller
             $comment = new Comment();
             $comment->fill($request->validated());
             $comment->post()->associate($post);
-            $post->comments()->lockForUpdate()->save($comment);
+            $post->comments()->save($comment);
 
             return $comment;
         });
@@ -96,6 +96,8 @@ class CommentController extends Controller
         $this->authorize('update', $comment);
 
         $result = DB::transaction(function () use ($request, $comment): bool {
+            $comment = Comment::lockForUpdate()->findOrFail($comment->id);
+
             $result = $comment->update($request->validated());
 
             return $result;
@@ -112,6 +114,8 @@ class CommentController extends Controller
         $this->authorize('delete', $comment);
 
         $result = DB::transaction(function () use ($comment): bool {
+            $comment = Comment::lockForUpdate()->findOrFail($comment->id);
+
             $result = $comment->delete();
 
             return $result;

@@ -82,6 +82,8 @@ class PostController extends Controller
         $this->authorize('update', $post);
 
         $result = DB::transaction(function () use ($request, $post): bool {
+            $post = Post::lockForUpdate()->findOrFail($post->id);
+
             $result = $post->update($request->validated());
 
             return $result;
@@ -98,7 +100,10 @@ class PostController extends Controller
         $this->authorize('delete', $post);
 
         $result = DB::transaction(function () use ($post): bool {
-            $post->comments()->lockForUpdate()->delete();
+            $post = Post::lockForUpdate()->findOrFail($post->id);
+            $post->comments()->lockForUpdate()->get();
+
+            $post->comments()->delete();
             $result = $post->delete();
 
             return $result;
