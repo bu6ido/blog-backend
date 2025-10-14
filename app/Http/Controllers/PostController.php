@@ -6,13 +6,17 @@ use App\Http\Requests\StorePostRequest;
 use App\Http\Requests\UpdatePostRequest;
 use App\Http\Resources\PostResource;
 use App\Models\Post;
+use App\Services\PostService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\DB;
 
 class PostController extends Controller
 {
+    public function __construct(protected PostService $postService)
+    {
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -20,30 +24,10 @@ class PostController extends Controller
     {
         $this->authorize('viewAny', Post::class);
 
-        $search = $request->input('query');
-        $rowsPerPage = $request->input('rowsPerPage', 5);
-        $sortBy = $request->input('sortBy');
-        $sortDir = $request->input('sortDir', 'asc');
-
-        $query = Post::with('user')->withAggregate('user', 'name')->withCount('comments');
-        if (! empty($search)) {
-            $query = $query->where(function ($q) use ($search) {
-                $q->where('id', 'like', '%'.$search.'%');
-                $q->orWhere('title', 'like', '%'.$search.'%');
-                $q->orWhereHas('user', function ($q2) use ($search) {
-                    $q2->where('name', 'like', '%'.$search.'%');
-                });
-            });
-        }
-        if (! empty($sortBy) && ! empty($sortDir)) {
-            $query = $query->orderBy($sortBy, $sortDir);
-        }
-        $query = $query
-            ->paginate($rowsPerPage)
-            ->withQueryString();
+        $result = $this->postService->findMany($request);
 
         return PostResource::collection(
-            $query
+            $result
         );
     }
 
@@ -54,11 +38,7 @@ class PostController extends Controller
     {
         $this->authorize('create', Post::class);
 
-        $post = DB::transaction(function () use ($request): Post {
-            $post = Post::create($request->validated());
-
-            return $post;
-        });
+        $post = $this->postService->create($request->validated());
 
         return response()->json(['ok' => true, 'id' => $post->id]);
     }
@@ -71,6 +51,8 @@ class PostController extends Controller
         /** @todo $post = Post::with('comments')->findOrFail($post->id); */
         $this->authorize('view', $post);
 
+        //$post = $this->postService->find($post->id);
+
         return new PostResource($post);
     }
 
@@ -81,13 +63,7 @@ class PostController extends Controller
     {
         $this->authorize('update', $post);
 
-        $result = DB::transaction(function () use ($request, $post): bool {
-            $post = Post::lockForUpdate()->findOrFail($post->id);
-
-            $result = $post->update($request->validated());
-
-            return $result;
-        });
+        $result = $this->postService->update($post->id, $request->validated());
 
         return response()->json(['ok' => $result]);
     }
@@ -99,15 +75,7 @@ class PostController extends Controller
     {
         $this->authorize('delete', $post);
 
-        $result = DB::transaction(function () use ($post): bool {
-            $post = Post::lockForUpdate()->findOrFail($post->id);
-            $post->comments()->lockForUpdate()->get();
-
-            $post->comments()->delete();
-            $result = $post->delete();
-
-            return $result;
-        });
+        $result = $this->postService->delete($post->id);
 
         return response()->json(['ok' => $result]);
     }
