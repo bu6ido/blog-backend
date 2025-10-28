@@ -7,6 +7,7 @@ use App\Models\Post;
 use App\Repositories\CommentRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CommentService
 {
@@ -26,16 +27,28 @@ class CommentService
 
     public function create(array $data, Post $post): Comment
     {
-        return $this->commentRepository->create($data, $post);
+        $comment = DB::transaction(function () use ($data, $post): Comment {
+            return $this->commentRepository->create($data, $post);
+        });
+
+        return $comment;
     }
 
     public function update(int $id, array $data): bool
     {
-        return $this->commentRepository->update($id, $data);
+        $result = DB::transaction(function () use ($id, $data): bool {
+            return $this->commentRepository->update($id, $data);
+        });
+
+        return $result;
     }
 
     public function delete(int $id): bool
     {
-        return $this->commentRepository->delete($id);
+        $result = DB::transaction(function () use ($id): bool {
+            return $this->commentRepository->delete($id);
+        });
+
+        return $result;
     }
 }

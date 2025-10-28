@@ -6,7 +6,6 @@ use App\Models\Comment;
 use App\Models\Post;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class CommentRepository implements CommentRepositoryInterface
 {
@@ -55,40 +54,21 @@ class CommentRepository implements CommentRepositoryInterface
 
     public function create($data, Post $post): Comment
     {
-        $comment = DB::transaction(function () use ($data, $post): Comment {
-            $comment = new Comment();
-            $comment->fill($data);
-            $comment->post()->associate($post);
-            $post->comments()->save($comment);
-
-            return $comment;
-        });
-
-        return $comment;
+        return Comment::create($data);
     }
 
     public function update(int $id, array $data): bool
     {
-        $result = DB::transaction(function () use ($id, $data): bool {
-            $comment = Comment::lockForUpdate()->findOrFail($id);
-
-            $result = $comment->update($data);
-
-            return $result;
-        });
+        $comment = Comment::lockForUpdate()->findOrFail($id);
+        $result = $comment->update($data);
 
         return $result;
     }
 
     public function delete(int $id): bool
     {
-        $result = DB::transaction(function () use ($id): bool {
-            $comment = Comment::lockForUpdate()->findOrFail($id);
-
-            $result = $comment->delete();
-
-            return $result;
-        });
+        $comment = Comment::lockForUpdate()->findOrFail($id);
+        $result = $comment->delete();
 
         return $result;
     }

@@ -24,8 +24,15 @@ class StoreCommentRequest extends FormRequest
         return [
             //
             'content' => 'required|string',
-            //            'post_id' => 'required|integer|exists:posts,id',
+            'post_id' => 'required|integer|exists:posts,id',
             'user_id' => 'required|integer|exists:users,id',
         ];
+    }
+
+    public function prepareForValidation(): void
+    {
+        $this->merge([
+            'post_id' => $this->route('post')->id,
+        ]);
     }
 }

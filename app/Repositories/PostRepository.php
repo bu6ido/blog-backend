@@ -5,7 +5,6 @@ namespace App\Repositories;
 use App\Models\Post;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class PostRepository implements PostRepositoryInterface
 {
@@ -43,39 +42,21 @@ class PostRepository implements PostRepositoryInterface
 
     public function create(array $data): Post
     {
-        $post = DB::transaction(function () use ($data): Post {
-            $post = Post::create($data);
-
-            return $post;
-        });
-
-        return $post;
+        return Post::create($data);
     }
 
     public function update(int $id, array $data): bool
     {
-        $result = DB::transaction(function () use ($id, $data): bool {
-            $post = Post::lockForUpdate()->findOrFail($id);
-
-            $result = $post->update($data);
-
-            return $result;
-        });
+        $post = Post::lockForUpdate()->findOrFail($id);
+        $result = $post->update($data);
 
         return $result;
     }
 
     public function delete(int $id): bool
     {
-        $result = DB::transaction(function () use ($id): bool {
-            $post = Post::lockForUpdate()->findOrFail($id);
-            $post->comments()->lockForUpdate()->get();
-
-            $post->comments()->delete();
-            $result = $post->delete();
-
-            return $result;
-        });
+        $post = Post::lockForUpdate()->findOrFail($id);
+        $result = $post->delete();
 
         return $result;
     }

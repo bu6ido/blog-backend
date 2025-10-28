@@ -6,6 +6,7 @@ use App\Models\Post;
 use App\Repositories\PostRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PostService
 {
@@ -25,16 +26,36 @@ class PostService
 
     public function create(array $data): Post
     {
-        return $this->postRepository->create($data);
+        $post = DB::transaction(function () use ($data): Post {
+            return $this->postRepository->create($data);
+        });
+
+        return $post;
     }
 
     public function update(int $id, array $data): bool
     {
-        return $this->postRepository->update($id, $data);
+        $result = DB::transaction(function () use ($id, $data): bool {
+            return $this->postRepository->update($id, $data);
+        });
+
+        return $result;
     }
 
     public function delete(int $id): bool
     {
-        return $this->postRepository->delete($id);
+        $result = DB::transaction(function () use ($id): bool {
+            $post = Post::lockForUpdate()->findOrFail($id);
+            $post->comments()->lockForUpdate()->get();
+
+            $post->comments()->delete();
+            $result = $post->delete();
+
+            return $result;
+
+            //return $this->postRepository->delete($id);
+        });
+
+        return $result;
     }
 }
